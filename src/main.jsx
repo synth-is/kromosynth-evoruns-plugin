@@ -5,7 +5,8 @@ import Interface from './Interface.jsx'
 import createHooks from 'zustand'
 import createStore from 'zustand/vanilla'
 
-import './index.css'
+// import './index.css'
+import 'semantic-ui-css/semantic.min.css'
 
 
 // Initial state management

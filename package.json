@@ -23,10 +23,13 @@
     "cpy-cli": "^4.2.0",
     "esbuild": "^0.17.8",
     "invariant": "^2.2.4",
+    "rc-slider": "^10.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "resize-observer-polyfill": "^1.5.1",
     "rimraf": "^5.0.0",
+    "semantic-ui-css": "^2.5.0",
+    "semantic-ui-react": "^2.1.4",
     "zustand": "^4.3.8"
   },
   "devDependencies": {
