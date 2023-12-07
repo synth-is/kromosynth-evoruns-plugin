@@ -1,4 +1,4 @@
-# kromosynth-evoruns-plugin
+# KRME
 
 kromosynth-evoruns-plugin is an audio plugin (VST3/AU) for MacOS and Windows. It enables access to rendered artefacts from [kromosynth evoruns](https://synth.is/exploring-evoruns).
 
@@ -15,7 +15,7 @@ available at the command line:
 * [Node.js](https://nodejs.org/en)
 * Bash: the build steps below expect to run scripts in a Bash environment. For Windows machines, consider running the following steps in a Git Bash environment, or with WSL.
 
-Next, we fetch the SRVB project and its dependencies,
+Next, we fetch the KRME project and its dependencies,
 
 ```bash
 # Clone the project with its submodules
@@ -48,7 +48,7 @@ is relocatable, thereby enabling distribution to end users.
 * After a successful build with either `npm run dev` or `npm run build`, you
   should have local plugin binaries built and copied into the correct
   audio plugin directories on your machine. If you don't see them, look in
-  `./native/build/scripted/SRVB_artefacts` and copy them manually
+  `./native/build/scripted/KRME_artefacts` and copy them manually
 * **Note**: the CMake build on Windows attempts to copy the VST3 plugin binary
   into `C:\Program Files`, a step that requires admin permissions. Therefore
   you should either run your build as an admin, or disable the copy plugin step
