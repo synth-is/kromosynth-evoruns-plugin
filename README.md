@@ -1,4 +1,4 @@
-# SRVB
+# kromosynth-evoruns-plugin
 
 kromosynth-evoruns-plugin is an audio plugin (VST3/AU) for MacOS and Windows. It enables access to rendered artefacts from [kromosynth evoruns](https://synth.is/exploring-evoruns).
 
