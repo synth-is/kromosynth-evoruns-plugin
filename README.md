@@ -1,35 +1,8 @@
 # SRVB
 
-SRVB is a small digital reverb audio plugin (VST3/AU) for MacOS and Windows.
+kromosynth-evoruns-plugin is an audio plugin (VST3/AU) for MacOS and Windows. It enables access to rendered artefacts from [kromosynth evoruns](https://synth.is/exploring-evoruns).
 
-This project demonstrates one way to write an audio plugin using JavaScript and
-familiar web technologies, and while there are several variants on this approach,
-it is meant to be both a compelling example and a good starting point for audio
-plugins made with a similar architecture.
-
-## Overview
-
-The software architecture in this plugin is much like [Tauri](https://tauri.app/) and similar to
-[Electron](https://www.electronjs.org/). The user interface is a simple Vite, React, and Tailwind app
-at the root of the repository, which is packaged into the plugin app bundle and loaded into a native
-webview instance owned by the plugin at runtime.
-
-The audio processing algorithm in the `dsp/` directory is also written in
-JavaScript using [Elementary](https://elementary.audio), and is run in a separate
-engine which directs the underlying native plugin audio processing. The native
-plugin itself provides the harness for these two frontend JavaScript bundles,
-and interfaces with the plugin host (typically a DAW) to coordinate the user
-interface and the audio processing loop.
-
-## Elementary
-
-If you're new to Elementary Audio, [Elementary](https://elementary.audio) is a JavaScript/C++ library for building audio applications.
-
-* **Declarative:** Elementary makes it simple to create interactive audio processes through functional, declarative programming. Describe your audio process as a function of your application state, and Elementary will efficiently update the underlying audio engine as necessary.
-* **Dynamic:** Most audio processing frameworks and tools facilitate building static processes. But what happens as your audio requirements change throughout the user journey? Elementary is designed to facilitate and adapt to the dynamic nature of modern audio applications.
-* **Portable:** By decoupling the JavaScript API from the underlying audio engine (the "what" from the "how"), Elementary enables writing portable applications. Whether the underlying engine is running in the browser, an audio plugin, or an embedded device, the JavaScript layer remains the same.
-
-Find more in the [Elementary repository on GitHub](https://github.com/elemaudio/elementary) and the documentation [on the website](https://elementary.audio/).
+This project is based on [SRVB](https://github.com/elemaudio/srvb).
 
 ## Getting Started
 
@@ -46,8 +19,8 @@ Next, we fetch the SRVB project and its dependencies,
 
 ```bash
 # Clone the project with its submodules
-git clone --recurse-submodules https://github.com/elemaudio/srvb.git
-cd srvb
+git clone --recurse-submodules https://github.com/synth-is/kromosynth-evoruns-plugin.git
+cd kromosynth-evoruns-plugin
 
 # Install npm dependencies
 npm install
