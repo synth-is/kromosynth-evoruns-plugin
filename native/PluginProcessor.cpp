@@ -3,10 +3,9 @@
 
 #include <choc_javascript_QuickJS.h>
 
-#include <queue>
-#include <mutex>
 #include <iostream>
 #include <fstream>
+#include "concurrentqueue.h"
 
 //==============================================================================
 // A quick helper for locating bundled asset files
@@ -178,11 +177,7 @@ bool EffectsPluginProcessor::isBusesLayoutSupported (const AudioProcessor::Buses
     return true;
 }
 
-// Create a synchronised queues, to store and process the incoming MIDI messages
-std::queue<juce::MidiMessage> incomingMidiMessages;
-std::queue<juce::MidiMessage> midiMessagesToProcess;
-std::mutex incomingMidiMessagesLock;
-std::mutex midiMessagesToProcessLock;
+moodycamel::ConcurrentQueue<juce::MidiMessage> midiMessageQueue;
 std::ofstream logFile;
 
 void logMidiMessage(const juce::MidiMessage& message)
@@ -195,38 +190,6 @@ void logMidiMessage(const juce::MidiMessage& message)
 
     // Close the log file
     logFile.close();
-}
-
-void processMidiMessages()
-{
-    std::lock_guard<std::mutex> lock(incomingMidiMessagesLock);
-    while (!incomingMidiMessages.empty()) {
-        juce::MidiMessage midiMessage = incomingMidiMessages.front();
-        incomingMidiMessages.pop();
-
-        {
-            std::lock_guard<std::mutex> processLock(midiMessagesToProcessLock);
-            midiMessagesToProcess.push(midiMessage);
-        }
-    }
-
-    while (true) {
-        juce::MidiMessage midiMessage;
-
-        {
-            std::lock_guard<std::mutex> processLock(midiMessagesToProcessLock);
-            if (midiMessagesToProcess.empty()) {
-                break;
-            }
-            midiMessage = midiMessagesToProcess.front();
-            midiMessagesToProcess.pop();
-        }
-
-        // Dispatch the MIDI message to your external engine, or log it
-        // externalEngine.processMidiMessage(midiMessage);
-        logMidiMessage(midiMessage);
-        
-    }
 }
 
 void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -247,16 +210,20 @@ void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         nullptr
     );
 
-    // Append the incoming MIDI messages to the incomingMidiMessages queue
+    // Enqueue the incoming MIDI messages into the lock-free queue
+    for (const auto metadata : midiMessages)
     {
-        std::lock_guard<std::mutex> lock(incomingMidiMessagesLock);
-        for (const auto metadata : midiMessages) {
-            const auto message = metadata.getMessage();
-            incomingMidiMessages.push(message);
-        }
+        const auto message = metadata.getMessage();
+        midiMessageQueue.enqueue(message);
     }
 
-    processMidiMessages(); // Dispatch the MIDI messages from the incomingMidiMessages queue to the external engine
+    // Dequeue and process the MIDI messages from the lock-free queue
+    juce::MidiMessage midiMessage;
+    while (midiMessageQueue.try_dequeue(midiMessage))
+    {
+        // TODO: Dispatch the MIDI message to the JS engine - for now log it:
+        logMidiMessage(midiMessage);
+    }
 }
 
 void EffectsPluginProcessor::parameterValueChanged (int parameterIndex, float newValue)
