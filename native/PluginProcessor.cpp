@@ -145,6 +145,17 @@ void EffectsPluginProcessor::setCurrentProgram (int /* index */) {}
 const juce::String EffectsPluginProcessor::getProgramName (int /* index */) { return {}; }
 void EffectsPluginProcessor::changeProgramName (int /* index */, const juce::String& /* newName */) {}
 
+void processIncomingMidiMessages();
+class MidiTimer : public juce::Timer
+{
+public:
+    void timerCallback() override
+    {
+        processIncomingMidiMessages();
+    }
+};
+MidiTimer midiTimer;
+
 //==============================================================================
 void EffectsPluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -164,12 +175,15 @@ void EffectsPluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 
     // Now that the environment is set up, push our current state
     triggerAsyncUpdate();
+
+    midiTimer.startTimer(20);
 }
 
 void EffectsPluginProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    midiTimer.stopTimer();
 }
 
 bool EffectsPluginProcessor::isBusesLayoutSupported (const AudioProcessor::BusesLayout& layouts) const
@@ -178,7 +192,9 @@ bool EffectsPluginProcessor::isBusesLayoutSupported (const AudioProcessor::Buses
 }
 
 moodycamel::ConcurrentQueue<juce::MidiMessage> midiMessageQueue;
+std::queue<juce::MidiMessage> incomingMidiMessagesQueue;
 std::ofstream logFile;
+
 
 void logMidiMessage(const juce::MidiMessage& message)
 {
@@ -190,6 +206,21 @@ void logMidiMessage(const juce::MidiMessage& message)
 
     // Close the log file
     logFile.close();
+}
+
+// This function is called on a non-real-time thread, like a juce::Timer
+void processIncomingMidiMessages()
+{
+    // Dequeue and process the MIDI messages from the incoming queue
+    while (!incomingMidiMessagesQueue.empty())
+    {
+        juce::MidiMessage midiMessage = incomingMidiMessagesQueue.front();
+        incomingMidiMessagesQueue.pop();
+
+        // Dispatch the MIDI message to your external engine, or log it
+        // externalEngine.processMidiMessage(midiMessage);
+        logMidiMessage(midiMessage);
+    }
 }
 
 void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -217,12 +248,11 @@ void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         midiMessageQueue.enqueue(message);
     }
 
-    // Dequeue and process the MIDI messages from the lock-free queue
+    // Dequeue and transfer the MIDI messages to the incoming queue
     juce::MidiMessage midiMessage;
     while (midiMessageQueue.try_dequeue(midiMessage))
     {
-        // TODO: Dispatch the MIDI message to the JS engine - for now log it:
-        logMidiMessage(midiMessage);
+        incomingMidiMessagesQueue.push(midiMessage);
     }
 }
 
