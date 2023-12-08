@@ -145,17 +145,6 @@ void EffectsPluginProcessor::setCurrentProgram (int /* index */) {}
 const juce::String EffectsPluginProcessor::getProgramName (int /* index */) { return {}; }
 void EffectsPluginProcessor::changeProgramName (int /* index */, const juce::String& /* newName */) {}
 
-void processIncomingMidiMessages();
-class MidiTimer : public juce::Timer
-{
-public:
-    void timerCallback() override
-    {
-        processIncomingMidiMessages();
-    }
-};
-MidiTimer midiTimer;
-
 //==============================================================================
 void EffectsPluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -176,14 +165,14 @@ void EffectsPluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     // Now that the environment is set up, push our current state
     triggerAsyncUpdate();
 
-    midiTimer.startTimer(20);
+    startTimer(20);
 }
 
 void EffectsPluginProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    midiTimer.stopTimer();
+    stopTimer();
 }
 
 bool EffectsPluginProcessor::isBusesLayoutSupported (const AudioProcessor::BusesLayout& layouts) const
@@ -195,8 +184,7 @@ moodycamel::ConcurrentQueue<juce::MidiMessage> midiMessageQueue;
 std::queue<juce::MidiMessage> incomingMidiMessagesQueue;
 std::ofstream logFile;
 
-
-void logMidiMessage(const juce::MidiMessage& message)
+void EffectsPluginProcessor::logMidiMessage(const juce::MidiMessage& message)
 {
     // Open the log file in append mode
     logFile.open("/tmp/midi_logs.txt", std::ios_base::app);
@@ -209,7 +197,7 @@ void logMidiMessage(const juce::MidiMessage& message)
 }
 
 // This function is called on a non-real-time thread, like a juce::Timer
-void processIncomingMidiMessages()
+void EffectsPluginProcessor::processIncomingMidiMessages()
 {
     // Dequeue and process the MIDI messages from the incoming queue
     while (!incomingMidiMessagesQueue.empty())
@@ -220,7 +208,12 @@ void processIncomingMidiMessages()
         // Dispatch the MIDI message to your external engine, or log it
         // externalEngine.processMidiMessage(midiMessage);
         logMidiMessage(midiMessage);
+        dispatchMidiMessage(midiMessage);
     }
+}
+
+void EffectsPluginProcessor::timerCallback() {
+    processIncomingMidiMessages();
 }
 
 void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -425,6 +418,32 @@ void EffectsPluginProcessor::dispatchError(std::string const& name, std::string 
 
     // Need the serialize here to correctly form the string script.
     auto expr = juce::String(kDispatchScript).replace("@", elem::js::serialize(name)).replace("%", elem::js::serialize(message)).toStdString();
+
+    // First we try to dispatch to the UI if it's available, because running this step will
+    // just involve placing a message in a queue.
+    if (auto* editor = static_cast<WebViewEditor*>(getActiveEditor())) {
+        editor->getWebViewPtr()->evaluateJavascript(expr);
+    }
+
+    // Next we dispatch to the local engine which will evaluate any necessary JavaScript synchronously
+    // here on the main thread
+    jsContext.evaluate(expr);
+}
+
+void EffectsPluginProcessor::dispatchMidiMessage(juce::MidiMessage const& message)
+{
+    const auto* kDispatchScript = R"script(
+(function() {
+    if (typeof globalThis.__receiveMidiMessage__ !== 'function')
+        return false;
+    
+    globalThis.__receiveMidiMessage__(%);
+    return true;
+    })();
+)script";
+
+    // Need the serialize here to correctly form the string script.
+    auto expr = juce::String(kDispatchScript).replace("%", elem::js::serialize(elem::js::serialize(message.getDescription().toStdString()))).toStdString();
 
     // First we try to dispatch to the UI if it's available, because running this step will
     // just involve placing a message in a queue.

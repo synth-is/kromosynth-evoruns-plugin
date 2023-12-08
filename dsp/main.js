@@ -81,3 +81,8 @@ globalThis.__receiveHydrationData__ = (data) => {
 globalThis.__receiveError__ = (err) => {
   console.log(`[Error: ${err.name}] ${err.message}`);
 };
+
+// Add a listener for MIDI messages
+globalThis.__receiveMidiMessage__ = (msg) => {
+  console.log(msg);
+};

@@ -11,7 +11,8 @@
 class EffectsPluginProcessor
     : public juce::AudioProcessor,
       public juce::AudioProcessorParameter::Listener,
-      private juce::AsyncUpdater
+      private juce::AsyncUpdater,
+      public juce::Timer
 {
 public:
     //==============================================================================
@@ -65,6 +66,11 @@ public:
     /** Internal helper for propagating processor state changes. */
     void dispatchStateChange();
     void dispatchError(std::string const& name, std::string const& message);
+    void dispatchMidiMessage(juce::MidiMessage const& message);
+
+    void logMidiMessage(const juce::MidiMessage& message);
+    void processIncomingMidiMessages();
+    void timerCallback() override;
 
 private:
     //==============================================================================
