@@ -25,6 +25,11 @@ public:
 private:
     //==============================================================================
     choc::value::Value handleSetParameterValueEvent(const choc::value::ValueView& e);
+    void handleUpdateSharedResourceMapEvent(const choc::value::ValueView& e);
+    bool downloadToFile(const juce::URL& audioFileURL, const juce::File& targetFile);
+    bool readAudioFileToVector(const juce::File& audioFile, std::vector<float>& audioData, double& sampleRate, int& numChannels);
+    void downloadAndExtractAudioData(const juce::URL& audioFileURL, std::vector<float>& audioData, double& sampleRate, int& numChannels);
+
 
     //==============================================================================
     std::unique_ptr<choc::ui::WebView> webView;

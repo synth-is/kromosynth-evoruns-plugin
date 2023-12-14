@@ -74,6 +74,14 @@ import manifest from '../public/manifest.json';
 //   </svg>
 // );
 
+function fetchAudioBuffer(url) {
+  console.log('fetching audio buffer', url);
+  globalThis.__postNativeMessage__("updateSharedResourceMap", {
+    "path": "sample0",
+    url
+  });
+}
+
 function ErrorAlert({message, reset}) {
   return (
     <div className="rounded-md bg-red-50 p-4">
@@ -154,8 +162,9 @@ export default function Interface(props) {
                 <Card.Header>Run 1</Card.Header>
                 <Card.Meta>Created in 2015</Card.Meta>
                 <Card.Description>
-                  <p>Some text</p>
+                  <p>Fetch audio</p>
                   <Button icon size='massive' color={'green'}
+                    onClick={() => fetchAudioBuffer('http://localhost:8000/Steam.wav')}
                   >
                     <Icon name='play' />
                   </Button>

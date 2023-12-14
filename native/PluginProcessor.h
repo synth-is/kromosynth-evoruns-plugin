@@ -71,6 +71,7 @@ public:
     void logMidiMessage(const juce::MidiMessage& message);
     void processIncomingMidiMessages();
     void timerCallback() override;
+    void updateSharedResourceMap(std::string const& key, std::vector<float> const& data);
 
 private:
     //==============================================================================

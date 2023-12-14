@@ -216,6 +216,16 @@ void EffectsPluginProcessor::timerCallback() {
     processIncomingMidiMessages();
 }
 
+void EffectsPluginProcessor::updateSharedResourceMap(std::string const& key, std::vector<float> const& data)
+{
+    runtime->updateSharedResourceMap(key, data.data(), data.size());
+
+    // TODO: place a data structure (e.g. JSON) with the loaded samples metadata into the state object
+    state.insert_or_assign("samples", elem::js::String(key));
+
+    dispatchStateChange();
+}
+
 void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     if (runtime == nullptr)
@@ -318,11 +328,22 @@ void EffectsPluginProcessor::initJavaScriptEngine()
         return choc::value::Value();
     });
 
-    jsContext.registerFunction("__log__", [](choc::javascript::ArgumentList args) {
+    jsContext.registerFunction("__log__", [&](choc::javascript::ArgumentList args) {
+        const auto* kDispatchScript = R"script(
+(function() {
+  console.log(%);
+  return true;
+})();
+)script";
         for (size_t i = 0; i < args.numArgs; ++i) {
             DBG(choc::json::toString(*args[i], true));
-        }
 
+            // Dispatch to the UI if it's available
+            if (auto* editor = static_cast<WebViewEditor*>(getActiveEditor())) {
+                auto expr = juce::String(kDispatchScript).replace("%", elem::js::serialize(elem::js::serialize(choc::json::toString(*args[i], false)))).toStdString();
+                editor->getWebViewPtr()->evaluateJavascript(expr);
+            }
+        }
         return choc::value::Value();
     });
 
@@ -454,6 +475,10 @@ void EffectsPluginProcessor::dispatchMidiMessage(juce::MidiMessage const& messag
     // Next we dispatch to the local engine which will evaluate any necessary JavaScript synchronously
     // here on the main thread
     jsContext.evaluate(expr);
+
+    // logFile2.open("/tmp/midi_dispatch_logs.txt", std::ios_base::app);
+    // logFile2 << "Dispatching MIDI message: " << expr << std::endl;
+    // logFile2.close();
 }
 
 //==============================================================================

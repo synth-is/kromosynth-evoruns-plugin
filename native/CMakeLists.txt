@@ -29,6 +29,8 @@ juce_add_plugin(${TARGET_NAME}
   FORMATS AU VST3 AUv3                # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
   PRODUCT_NAME ${TARGET_NAME})        # The name of the final executable, which can differ from the target name
 
+juce_generate_juce_header(${TARGET_NAME})
+
 # Copy static assets post build
 if (NOT ELEM_DEV_LOCALHOST)
   get_target_property(ACTIVE_TARGETS ${TARGET_NAME} JUCE_ACTIVE_PLUGIN_TARGETS)
@@ -74,6 +76,7 @@ target_compile_definitions(${TARGET_NAME}
 target_link_libraries(${TARGET_NAME}
   PRIVATE
   juce::juce_audio_basics
+  juce::juce_audio_formats
   juce::juce_audio_devices
   juce::juce_audio_plugin_client
   juce::juce_audio_processors

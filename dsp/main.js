@@ -2,15 +2,18 @@ import {Renderer, el} from '@elemaudio/core';
 import {RefMap} from './RefMap';
 import srvb from './srvb';
 
-
 // This project demonstrates writing a small FDN reverb effect in Elementary.
 //
 // First, we initialize a custom Renderer instance that marshals our instruction
 // batches through the __postNativeMessage__ function to direct the underlying native
 // engine.
-let core = new Renderer((batch) => {
-  __postNativeMessage__(JSON.stringify(batch));
-});
+let core;
+if( !core ) {
+  core = new Renderer((batch) => {
+    console.log("Instantiating Renderer");
+    __postNativeMessage__(JSON.stringify(batch));
+  });
+}
 
 // Next, a RefMap for coordinating our refs
 let refs = new RefMap(core);
@@ -30,25 +33,27 @@ function shouldRender(prevState, nextState) {
 // Given the new state, we simply update our refs or perform a full render depending
 // on the result of our `shouldRender` check.
 globalThis.__receiveStateChange__ = (serializedState) => {
+  console.log("Receiving state change:");
+  console.log(serializedState);
   const state = JSON.parse(serializedState);
 
-  if (shouldRender(prevState, state)) {
-    let stats = core.render(...srvb({
-      key: 'srvb',
-      sampleRate: state.sampleRate,
-      size: refs.getOrCreate('size', 'const', {value: state.size}, []),
-      decay: refs.getOrCreate('decay', 'const', {value: state.decay}, []),
-      mod: refs.getOrCreate('mod', 'const', {value: state.mod}, []),
-      mix: refs.getOrCreate('mix', 'const', {value: state.mix}, []),
-    }, el.in({channel: 0}), el.in({channel: 1})));
+//   if (shouldRender(prevState, state)) {
+//     let stats = core.render(...srvb({
+//       key: 'srvb',
+//       sampleRate: state.sampleRate,
+//       size: refs.getOrCreate('size', 'const', {value: state.size}, []),
+//       decay: refs.getOrCreate('decay', 'const', {value: state.decay}, []),
+//       mod: refs.getOrCreate('mod', 'const', {value: state.mod}, []),
+//       mix: refs.getOrCreate('mix', 'const', {value: state.mix}, []),
+//     }, el.in({channel: 0}), el.in({channel: 1})));
 
-    console.log(stats);
-  } else {
-    refs.update('size', {value: state.size});
-    refs.update('decay', {value: state.decay});
-    refs.update('mod', {value: state.mod});
-    refs.update('mix', {value: state.mix});
-  }
+//     console.log(stats);
+//   } else {
+//     refs.update('size', {value: state.size});
+//     refs.update('decay', {value: state.decay});
+//     refs.update('mod', {value: state.mod});
+//     refs.update('mix', {value: state.mix});
+//   }
 
   prevState = state;
 };
@@ -84,5 +89,8 @@ globalThis.__receiveError__ = (err) => {
 
 // Add a listener for MIDI messages
 globalThis.__receiveMidiMessage__ = (msg) => {
+
   console.log(msg);
+
+  core.render( el.sample({path: 'sample0', mode: 'trigger'}, el.train(1), 1 ) );
 };
