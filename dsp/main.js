@@ -105,9 +105,13 @@ globalThis.__receiveMidiMessage__ = (msg) => {
     sampleTrigger1 = el.const({key: "sampleTrigger1", value: 0});
   }
 
-  core.render( 
-    el.sample( {path: 'sample0'}, sampleTrigger0, 1 )
-    , 
-    el.sample( {path: 'sample1'}, sampleTrigger1, 0.5 ) 
+  let renderResult = core.render( 
+    el.add(
+      el.sample( {path: 'sample0'}, sampleTrigger0, 1 )
+      , 
+      el.sample( {path: 'sample1'}, sampleTrigger1, 0.5 ) 
+    )
   );
+
+  console.log("renderResult:", renderResult);
 };
