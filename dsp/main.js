@@ -87,10 +87,27 @@ globalThis.__receiveError__ = (err) => {
   console.log(`[Error: ${err.name}] ${err.message}`);
 };
 
+let sampleTrigger0 = el.const({key: "sampleTrigger0", value: 0});
+let sampleTrigger1 = el.const({key: "sampleTrigger1", value: 0});
+
 // Add a listener for MIDI messages
 globalThis.__receiveMidiMessage__ = (msg) => {
 
-  console.log(msg);
+  console.log("msg:", msg);
 
-  core.render( el.sample({path: 'sample0', mode: 'trigger'}, el.train(1), 1 ) );
+  if( msg.includes("Note on") ) {
+    console.log("Note on");
+    sampleTrigger0 = el.const({key: "sampleTrigger0", value: 1});
+    sampleTrigger1 = el.const({key: "sampleTrigger1", value: 1});
+  } else if( msg.includes("Note off") ) {
+    console.log("Note off");
+    sampleTrigger0 = el.const({key: "sampleTrigger0", value: 0});
+    sampleTrigger1 = el.const({key: "sampleTrigger1", value: 0});
+  }
+
+  core.render( 
+    el.sample( {path: 'sample0'}, sampleTrigger0, 1 )
+    , 
+    el.sample( {path: 'sample1'}, sampleTrigger1, 0.5 ) 
+  );
 };

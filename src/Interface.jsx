@@ -80,6 +80,11 @@ function fetchAudioBuffer(url) {
     "path": "sample0",
     url
   });
+
+  globalThis.__postNativeMessage__("updateSharedResourceMap", {
+    "path": "sample1",
+    url
+  });
 }
 
 function ErrorAlert({message, reset}) {
@@ -164,7 +169,7 @@ export default function Interface(props) {
                 <Card.Description>
                   <p>Fetch audio</p>
                   <Button icon size='massive' color={'green'}
-                    onClick={() => fetchAudioBuffer('http://localhost:8000/Steam.wav')}
+                    onClick={() => fetchAudioBuffer('http://localhost:8000/Steam_44K.wav')}
                   >
                     <Icon name='play' />
                   </Button>
