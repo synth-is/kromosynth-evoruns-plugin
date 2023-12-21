@@ -216,16 +216,6 @@ void EffectsPluginProcessor::timerCallback() {
     processIncomingMidiMessages();
 }
 
-void EffectsPluginProcessor::updateSharedResourceMap(std::string const& key, std::vector<float> const& data)
-{
-    runtime->updateSharedResourceMap(key, data.data(), data.size());
-
-    // TODO: place a data structure (e.g. JSON) with the loaded samples metadata into the state object
-    state.insert_or_assign("samples", elem::js::String(key));
-
-    dispatchStateChange();
-}
-
 void EffectsPluginProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     if (runtime == nullptr)
@@ -266,6 +256,18 @@ void EffectsPluginProcessor::parameterValueChanged (int parameterIndex, float ne
 
     pr.store({ newValue, true });
     triggerAsyncUpdate();
+}
+
+void EffectsPluginProcessor::updateSharedResourceMap(std::string const& key, std::vector<float> const& data)
+{
+    runtime->updateSharedResourceMap(key, data.data(), data.size());
+
+    // TODO: place a data structure (e.g. JSON) with the loaded samples metadata into the state object
+    state.insert_or_assign("samples", elem::js::String(key));
+
+    initJavaScriptEngine();
+    // dispatchStateChange();
+    // triggerAsyncUpdate();
 }
 
 void EffectsPluginProcessor::parameterGestureChanged (int, bool)
